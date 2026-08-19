@@ -202,6 +202,30 @@ html, body {
 
 .panel-empty { padding: 20px; color: var(--muted); font-size: 13px; text-align: center; }
 
+/* ---- Onglet d'ouverture du panneau (mobile uniquement) ---- */
+.sheet-toggle {
+  display: none;
+  width: 100%;
+  border: none;
+  background: var(--card);
+  color: var(--text);
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  align-items: center;
+  gap: 10px;
+}
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--muted);
+  flex: none;
+}
+.sheet-chevron { margin-left: auto; color: var(--muted); font-size: 10px; }
+
 /* Étiquette de prix permanente au-dessus de chaque point de station.
    Bulle sombre lisible, légère, pointant le prix à 3 décimales. */
 .price-tip {
@@ -235,8 +259,83 @@ html, body {
 .spark-label { margin-top: 8px; font-size: 11px; font-weight: 600; color: var(--muted); }
 .spark text { font-size: 9px; fill: var(--muted); }
 
-/* ---- Responsive ---- */
-@media (max-width: 800px) {
-  .layout { grid-template-columns: 1fr; grid-template-rows: 1fr 45%; }
-  .side-panel { border-left: none; border-top: 1px solid var(--border); }
+/* ---- Responsive : smartphone (< 768px) ---- */
+@media (max-width: 767px) {
+  /* Pas de header : la carte gagne toute la hauteur. */
+  .topbar { display: none; }
+  .layout {
+    display: block;
+    height: 100%;
+  }
+
+  .map-wrap {
+    position: absolute;
+    inset: 0;
+  }
+  #map { height: 100%; }
+
+  /* Panneau en feuille inférieure, replié par défaut (seul l'onglet dépasse). */
+  .side-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2000;
+    max-height: 70%;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--border);
+    border-left: none;
+    box-shadow: 0 -8px 24px rgba(0,0,0,.35);
+    background: var(--bg);
+    transform: translateY(calc(100% - 34px)); /* fermé : seul l'onglet visible */
+    transition: transform .22s ease;
+  }
+  .side-panel.open { transform: translateY(0); }
+
+  .sheet-toggle {
+    display: flex; /* onglet d'ouverture (mobile) */
+    flex: none;
+  }
+  .side-panel.open .sheet-chevron { transform: rotate(180deg); }
+  .panel-header { flex: none; }
+
+  /* Cartes de localisation plus compactes sur petit écran. */
+  .loc-card {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    padding: 8px;
+  }
+  .legend-card { bottom: 44px; right: 8px; }
+
+  /* Corrige la rosace de zoom qui chevauche les contrôles. */
+  .leaflet-top.leaflet-right { top: 8px; }
 }
+
+/* ---- Responsive : tablettes moyennes (< 1080px, ≥ 768px) ---- */
+@media (min-width: 768px) and (max-width: 1079px) {
+  .layout { grid-template-columns: 1fr 300px; }
+}
+
+/* ---- Bulle « Ma position » (desktop) ---- */
+.my-loc {
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.my-loc-core {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #2563eb; border: 2.5px solid #0f172a;
+  box-shadow: 0 0 0 1.5px rgba(255,255,255,.6);
+}
+.my-loc-halo {
+  position: absolute; top: 0; left: 0; width: 30px; height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37,99,235,.35), transparent 65%);
+  animation: myloc-pulse 1.8s ease-in-out infinite;
+}
+@keyframes myloc-pulse { 0%,100%{opacity:.5} 50%{opacity:1} }

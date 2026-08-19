@@ -54,7 +54,12 @@
     </section>
 
     <!-- Panneau latéral : liste des stations -->
-    <aside class="side-panel">
+    <aside class="side-panel" id="side-panel">
+      <button class="sheet-toggle" id="sheet-toggle" aria-expanded="false" type="button">
+        <span class="sheet-handle"></span>
+        <span id="sheet-title">Stations</span>
+        <span class="sheet-chevron">▲</span>
+      </button>
       <div class="panel-header">
         <h2 id="listing-title">Stations</h2>
         <button id="btn-refresh" class="btn btn-small" title="Actualiser les données">🔄</button>

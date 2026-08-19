@@ -12,7 +12,9 @@
     { key: "GPLc",    label: "GPLc",      color: "#f97316", defaultRadius: 50 },
   ];
   const FAV_KEY = "prixessence.favs";
-  const DEFAULT_VIEW = [46.6, 2.35]; // Paris
+  // Vue par défaut : Saint-Paul-Trois-Châteaux (Drôme), où habite l'utilisateur.
+  const DEFAULT_VIEW = [44.3494, 4.7686];
+  const DEFAULT_ZOOM = 12;
 
   // ---- État global ----
   const state = {
@@ -24,13 +26,27 @@
     favorites: loadFavs(),
   };
 
-  const map = L.map("map", { zoomControl: true }).setView(DEFAULT_VIEW, 6);
+  const map = L.map("map", { zoomControl: true }).setView(DEFAULT_VIEW, DEFAULT_ZOOM);
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   }).addTo(map);
 
   const markerLayer = L.layerGroup().addTo(map);
+  const myLayer = L.layerGroup().addTo(map); // bulle « Ma position »
+
+  function setMyLocation(lat, lon) {
+    myLayer.clearLayers();
+    // Halo bleu + point central, pour bien distinguer « ici » des stations.
+    const ic = L.divIcon({
+      className: "my-loc",
+      html: '<div class="my-loc-core"></div><div class="my-loc-halo"></div>',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+    });
+    myLayer.addLayer(L.marker([lat, lon], { icon: ic, zIndexOffset: 1000, title: "Ma position" }));
+  }
+  function clearMyLocation() { myLayer.clearLayers(); }
 
   // ---- Références DOM ----
   const $ = (id) => document.getElementById(id);
@@ -41,6 +57,9 @@
   const stationList = $("station-list");
   const panelEmpty = $("panel-empty");
   const listingTitle = $("listing-title");
+  const sheetTitle = $("sheet-title");
+  const sheetToggle = $("sheet-toggle");
+  const sidePanel = $("side-panel");
   const radiusInput = $("radius");
   const radiusLabel = $("radius-label");
 
@@ -136,7 +155,9 @@
       params.set("radius", state.radius * 1000);
     }
     params.set("limit", "500");
-    listingTitle.textContent = state.center ? `Autour de l'emplacement` : "Toutes les stations";
+    const title = state.center ? `Stations autour de l'emplacement` : "Toutes les stations";
+    listingTitle.textContent = title;
+    if (sheetTitle) sheetTitle.textContent = title;
     try {
       const r = await fetch("/api/stations?" + params.toString());
       if (!r.ok) throw new Error("HTTP " + r.status);
@@ -324,19 +345,32 @@
   }
 
   // ---- Localisation ----
-  function setCenter(label, lat, lon, keepView) {
+  function setCenter(label, lat, lon, keepView, isGeo) {
     state.center = { lat, lon };
     radiusLabel.textContent = state.radius + " km";
+    // Position GPS : affiche la bulle « Ma position » ; toute autre sélection
+    // (ville, favori) la retire.
+    if (isGeo) setMyLocation(lat, lon);
+    else clearMyLocation();
     loadStations();
     if (!keepView) map.setView([lat, lon], 11);
   }
 
   $("btn-geo").onclick = () => {
     if (!navigator.geolocation) { flash("Géolocalisation non supportée."); return; }
+    // La géoloc navigateur n'est disponible qu'en HTTPS (ou localhost).
+    // En HTTP pur sur le réseau, le navigateur la bloque silencieusement → message clair.
+    if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+      flash("Géoloc indisponible : la page doit être servie en HTTPS pour obtenir la position.", 5000);
+      return;
+    }
     navigator.geolocation.getCurrentPosition(
-      (pos) => setCenter("Ma position", pos.coords.latitude, pos.coords.longitude, false),
-      () => flash("Impossible d'obtenir la position.", 3000),
-      { enableHighAccuracy: true, timeout: 10000 }
+      (pos) => {
+        setMyLocation(pos.coords.latitude, pos.coords.longitude);
+        setCenter("Ma position", pos.coords.latitude, pos.coords.longitude, false, true);
+      },
+      () => flash("Impossible d'obtenir la position. Autorise l'accès à la localisation.", 4000),
+      { enableHighAccuracy: true, timeout: 12000 }
     );
   };
 
@@ -389,6 +423,14 @@
     } catch {
       statusLine.textContent = "Échec du rafraîchissement.";
     }
+  }
+
+  // ---- Panneau mobile (bottom sheet) ----
+  if (sheetToggle && sidePanel) {
+    sheetToggle.onclick = () => {
+      const open = sidePanel.classList.toggle("open");
+      sheetToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    };
   }
 
   // ---- Init ----
