@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Prix-Essence ⛽</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛽</text></svg>">
+  <!-- Leaflet (CDN) -->
+  <link rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossorigin=""></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">⛽</span>
+      <h1>Prix-Essence</h1>
+    </div>
+    <div class="fuel-pills" id="fuel-pills"></div>
+  </header>
+
+  <main class="layout">
+    <!-- Carte -->
+    <section class="map-wrap">
+      <div id="map"></div>
+
+      <!-- Contrôles de localisation superposés -->
+      <div class="loc-card" id="loc-card">
+        <div class="loc-row">
+          <button id="btn-geo" class="btn" title="Utiliser ma position GPS">📍 Ma position</button>
+          <div class="city-search">
+            <input id="city-input" type="text" placeholder="Ville ou code postal…"
+                   autocomplete="off" aria-label="Rechercher une ville">
+            <ul id="city-suggestions" class="suggestions" hidden></ul>
+          </div>
+        </div>
+        <div class="favorites" id="favorites"></div>
+        <label class="radius-control">
+          <span>Rayon : <b id="radius-label">20 km</b></span>
+          <input type="range" id="radius" min="5" max="100" value="20" step="5">
+        </label>
+      </div>
+
+      <div class="legend-card" id="legend">
+        <div class="legend-gradient"></div>
+        <div class="legend-labels"><span id="legend-min">–</span><span id="legend-max">–</span></div>
+      </div>
+    </section>
+
+    <!-- Panneau latéral : liste des stations -->
+    <aside class="side-panel">
+      <div class="panel-header">
+        <h2 id="listing-title">Stations</h2>
+        <button id="btn-refresh" class="btn btn-small" title="Actualiser les données">🔄</button>
+      </div>
+      <div class="status-line" id="status-line">Chargement…</div>
+      <ul id="station-list" class="station-list"></ul>
+      <div class="panel-empty" id="panel-empty" hidden>Aucune station dans cette zone.</div>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

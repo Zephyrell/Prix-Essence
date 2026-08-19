@@ -1,0 +1,20 @@
+#!/sbin/openrc-run
+# Service OpenRC pour Prix-Essence (LXC Alpine)
+# install.sh génère automatiquement ce fichier ; ceci est le modèle de référence.
+
+description="Prix-Essence : prix des carburants en France"
+
+depend() {
+    need net
+}
+
+: ${DB_PATH:="/opt/prix-essence/data/prix-essence.db"}
+: ${LISTEN:="127.0.0.1:8080"}
+: ${REFRESH_ON_START:="true"}
+
+command="/opt/prix-essence/prix-essence"
+command_user="prixessence"
+command_background="false"
+pidfile="/run/prix-essence.pid"
+output_log="/var/log/prix-essence.log"
+error_log="/var/log/prix-essence.log"

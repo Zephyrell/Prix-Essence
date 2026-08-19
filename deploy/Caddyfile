@@ -1,0 +1,9 @@
+# Caddyfile — reverse proxy HTTPS pour Prix-Essence
+# Remplace 'carburants.votredomaine.fr' par ton domaine.
+# Caddy gère automatiquement le certificat Let's Encrypt (ports 80 + 443 ouverts).
+
+carburants.votredomaine.fr {
+    encode gzip
+
+    reverse_proxy 127.0.0.1:8080
+}

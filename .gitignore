@@ -1,0 +1,18 @@
+# Binaires
+bin/
+
+# Base de données et données locales
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Config locale Claude Code
+.claude/settings.local.json
+
+# Environnement / secrets
+.env
+*.local
+
+# macOS
+.DS_Store
