@@ -115,6 +115,15 @@ func (s *Server) handleStations(w http.ResponseWriter, r *http.Request) {
 	out := make([]any, 0, len(views))
 	for _, v := range views {
 		p := findFuel(v.Fuels, fuel)
+		var prix any
+		var maj any
+		if p.present {
+			prix = p.prix
+			maj = p.maj
+		}
+		// Quand la station ne propose pas le carburant demandé (ex. pas de E85),
+		// on renvoie null au lieu de 0 : un 0 biaiserait la légende de couleurs
+		// et laisserait croire à un prix réel.
 		out = append(out, map[string]any{
 			"id":          v.ID,
 			"adresse":     v.Adresse,
@@ -122,8 +131,8 @@ func (s *Server) handleStations(w http.ResponseWriter, r *http.Request) {
 			"cp":          v.CP,
 			"lat":         v.Latitude,
 			"lon":         v.Longitude,
-			"prix":        p.prix,
-			"maj":         p.maj,
+			"prix":        prix,
+			"maj":         maj,
 			"distance_km": v.DistanceKm,
 		})
 	}
@@ -134,14 +143,15 @@ func (s *Server) handleStations(w http.ResponseWriter, r *http.Request) {
 }
 
 type fuelPrice struct {
-	prix float64
-	maj  string
+	prix    float64
+	maj     string
+	present bool // false = la station ne propose pas ce carburant
 }
 
 func findFuel(fuels []db.Fuel, nom string) fuelPrice {
 	for _, f := range fuels {
 		if f.Nom == nom {
-			return fuelPrice{prix: f.Prix, maj: f.Maj}
+			return fuelPrice{prix: f.Prix, maj: f.Maj, present: true}
 		}
 	}
 	return fuelPrice{}
