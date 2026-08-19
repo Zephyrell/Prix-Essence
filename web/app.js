@@ -189,6 +189,13 @@
     const wantExtended = map.getZoom() <= FULL_ZOOM;
     if (wantExtended !== state.extended) {
       state.extended = wantExtended;
+      // Revenir en vue locale : on recentre sur l'endroit zoome, pas sur
+      // Saint-Paul, pour que dézoomer puis re-zoomer ailleurs charge bien les
+      // stations de cet endroit.
+      if (!wantExtended) {
+        const c = map.getCenter();
+        state.center = { lat: c.lat, lon: c.lng, label: "la zone affichée" };
+      }
       loadStations();
     }
   }
