@@ -15,15 +15,19 @@
   // Vue par défaut : Saint-Paul-Trois-Châteaux (Drôme), où habite l'utilisateur.
   const DEFAULT_VIEW = [44.3494, 4.7686];
   const DEFAULT_ZOOM = 12;
+  // En-deçà de ce zoom, la carte montre la France entière (toutes les stations,
+  // sans filtre de rayon) ; à partir de ce zoom, elle montre le rayon autour du
+  // centre (ville, favori, GPS ou Saint-Paul par défaut).
+  const FULL_ZOOM = 8;
 
   // ---- État global ----
   const state = {
     fuel: "Gazole",
     radius: 20,
     // Centre initial : Saint-Paul-Trois-Châteaux (domicile). Non-null ⇒ au
-    // démarrage on charge les stations du rayon autour de cette ville, et la
-    // carte reste sur la vue locale au lieu de zoom-out sur toute la France.
+    // démarrage on charge les stations du rayon autour de cette ville.
     center: { lat: DEFAULT_VIEW[0], lon: DEFAULT_VIEW[1], label: "Saint-Paul-Trois-Châteaux" },
+    extended: false,     // true = vue France entière (zoom global, hors rayon)
     stations: [],        // dernière liste chargée
     markers: [],         // L.layerGroup
     favorites: loadFavs(),
@@ -152,18 +156,16 @@
   // ---- Données ----
   async function loadStations() {
     const params = new URLSearchParams({ fuel: state.fuel });
-    if (state.center) {
+    if (!state.extended && state.center) {
       params.set("lat", state.center.lat);
       params.set("lon", state.center.lon);
       params.set("radius", state.radius * 1000);
     }
     params.set("limit", "500");
-    // Quand le centre porte un libellé (ville choisie ou Saint-Paul par
-    // défaut), on l'affiche ; sans libellé, on retombe sur « Toutes les
-    // stations ».
-    const title = state.center.label
-      ? `Stations autour de ${state.center.label}`
-      : "Toutes les stations";
+    // Vue locale (autour d'une ville / Saint-Paul) ou France entière.
+    const title = state.extended
+      ? "Toutes les stations"
+      : (state.center && state.center.label ? `Stations autour de ${state.center.label}` : "Toutes les stations");
     listingTitle.textContent = title;
     if (sheetTitle) sheetTitle.textContent = title;
     try {
@@ -178,6 +180,19 @@
       console.error(err);
     }
   }
+
+  // ---- Bascule zoom global / local ----
+  // Au-deçà de FULL_ZOOM on montre la France entière, au-delà on resserre sur
+  // le rayon (centre actuel). Ne recharge que lorsque l'état change vraiment,
+  // pour ne pas marteler l'API à chaque scroll/zoom.
+  function applyZoomMode() {
+    const wantExtended = map.getZoom() <= FULL_ZOOM;
+    if (wantExtended !== state.extended) {
+      state.extended = wantExtended;
+      loadStations();
+    }
+  }
+  map.on("zoomend", applyZoomMode);
 
   // ---- Carte ----
   function renderMap() {
@@ -352,6 +367,7 @@
   // ---- Localisation ----
   function setCenter(label, lat, lon, keepView, isGeo) {
     state.center = { lat, lon, label };
+    state.extended = false; // une sélection ramène toujours à la vue locale
     radiusLabel.textContent = state.radius + " km";
     // Position GPS : affiche la bulle « Ma position » ; toute autre sélection
     // (ville, favori) la retire.
