@@ -261,18 +261,32 @@ html, body {
 
 /* ---- Responsive : smartphone (< 768px) ---- */
 @media (max-width: 767px) {
-  /* Pas de header : la carte gagne toute la hauteur. */
-  .topbar { display: none; }
+  /* Header compact : on masque seulement la marque (logo + titre), on garde
+     la barre de carburant, indispensable pour choisir le carburant. */
+  .topbar {
+    /* Barre de carburant fixée en haut : toujours accessible, la carte passe
+       dessous. On réduit le padding pour laisser le max d'espace à la carte. */
+    position: sticky;
+    top: 0;
+    z-index: 1500;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 8px;
+  }
+  .brand { display: none; }
+  .fuel-pill { font-size: 12px; padding: 4px 10px; }
   .layout {
-    display: block;
-    height: 100%;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 100px); /* hauteur du viewport moins la barre de carburant */
   }
 
   .map-wrap {
-    position: absolute;
-    inset: 0;
+    position: relative;
+    flex: 1;
+    min-height: 0;
   }
-  #map { height: 100%; }
+  #map { position: absolute; inset: 0; }
 
   /* Panneau en feuille inférieure, replié par défaut (seul l'onglet dépasse). */
   .side-panel {

@@ -20,7 +20,10 @@
   const state = {
     fuel: "Gazole",
     radius: 20,
-    center: null,        // point recherché (ou géoloc), null = vue complète
+    // Centre initial : Saint-Paul-Trois-Châteaux (domicile). Non-null ⇒ au
+    // démarrage on charge les stations du rayon autour de cette ville, et la
+    // carte reste sur la vue locale au lieu de zoom-out sur toute la France.
+    center: { lat: DEFAULT_VIEW[0], lon: DEFAULT_VIEW[1], label: "Saint-Paul-Trois-Châteaux" },
     stations: [],        // dernière liste chargée
     markers: [],         // L.layerGroup
     favorites: loadFavs(),
@@ -155,7 +158,12 @@
       params.set("radius", state.radius * 1000);
     }
     params.set("limit", "500");
-    const title = state.center ? `Stations autour de l'emplacement` : "Toutes les stations";
+    // Quand le centre porte un libellé (ville choisie ou Saint-Paul par
+    // défaut), on l'affiche ; sans libellé, on retombe sur « Toutes les
+    // stations ».
+    const title = state.center.label
+      ? `Stations autour de ${state.center.label}`
+      : "Toutes les stations";
     listingTitle.textContent = title;
     if (sheetTitle) sheetTitle.textContent = title;
     try {
@@ -209,11 +217,8 @@
       m.on("click", () => selectStation(s));
       markerLayer.addLayer(m);
     });
-
-    if (!state.center && state.stations.length) {
-      // Zoom global sur les stations affichées
-      try { map.fitBounds(markerLayer.getBounds(), { padding: [20, 20] }); } catch {}
-    }
+    // NB : pas de fitBounds initial — la carte démarre sur la vue locale
+    // (Saint-Paul) et ne doit jamais zoom-out sur toute la France.
   }
 
   function popupHTML(s) {
@@ -346,7 +351,7 @@
 
   // ---- Localisation ----
   function setCenter(label, lat, lon, keepView, isGeo) {
-    state.center = { lat, lon };
+    state.center = { lat, lon, label };
     radiusLabel.textContent = state.radius + " km";
     // Position GPS : affiche la bulle « Ma position » ; toute autre sélection
     // (ville, favori) la retire.
